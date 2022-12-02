@@ -1,5 +1,6 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TypeVar, Generic
 
+import numpy
 import torch
 
 from allennlp.common import Registrable
@@ -14,8 +15,10 @@ from allennlp.data.vocabulary import Vocabulary
 # though it could also be a mask, or any other data that you want to pass.
 IndexedTokenList = Dict[str, List[Any]]
 
+TokenType = TypeVar("TokenType", int, List[int], numpy.ndarray)
 
-class TokenIndexer(Registrable):
+
+class TokenIndexer(Generic[TokenType], Registrable):
     """
     A `TokenIndexer` determines how string tokens get represented as arrays of indices in a model.
     This class both converts strings into numerical values, with the help of a
@@ -53,7 +56,7 @@ class TokenIndexer(Registrable):
         """
         raise NotImplementedError
 
-    def tokens_to_indices(self, tokens: List[Token], vocabulary: Vocabulary) -> IndexedTokenList:
+    def tokens_to_indices(self, tokens: List[Token], vocabulary: Vocabulary, index_name: str) -> IndexedTokenList:
         """
         Takes a list of tokens and converts them to an `IndexedTokenList`.
         This could be just an ID for each token from the vocabulary.
@@ -80,6 +83,16 @@ class TokenIndexer(Registrable):
         """
         raise NotImplementedError
 
+    def get_padding_lengths(self, token: TokenType) -> Dict[str, int]:
+        """
+        This method returns a padding dictionary for the given token that specifies lengths for
+        all arrays that need padding.  For example, for single ID tokens the returned dictionary
+        will be empty, but for a token characters representation, this will return the number
+        of characters in the token.
+        """
+        raise NotImplementedError
+
+    '''
     def get_padding_lengths(self, indexed_tokens: IndexedTokenList) -> Dict[str, int]:
         """
         This method returns a padding dictionary for the given `indexed_tokens` specifying all
@@ -92,6 +105,30 @@ class TokenIndexer(Registrable):
         for key, token_list in indexed_tokens.items():
             padding_lengths[key] = max(len(token_list), self._token_min_padding_length)
         return padding_lengths
+    '''
+
+    def as_padded_tensor(self,
+                         tokens: Dict[str, List[TokenType]],
+                         desired_num_tokens: Dict[str, int],
+                         padding_lengths: Dict[str, int]) -> Dict[str, torch.Tensor]:
+        """
+        This method pads a list of tokens to ``desired_num_tokens`` and returns that padded list
+        of input tokens as a torch Tensor. If the input token list is longer than ``desired_num_tokens``
+        then it will be truncated.
+
+        ``padding_lengths`` is used to provide supplemental padding parameters which are needed
+        in some cases.  For example, it contains the widths to pad characters to when doing
+        character-level padding.
+
+        Note that this method should be abstract, but it is implemented to allow backward compatability.
+        """
+        if not self.has_warned_for_as_padded_tensor:
+            warnings.warn("Using a Field with pad_token_sequence, which will be depreciated in 1.0.0."
+                          "Please implement as_padded_tensor instead.", FutureWarning)
+            self.has_warned_for_as_padded_tensor = True
+
+        padded = self.pad_token_sequence(tokens, desired_num_tokens, padding_lengths)
+        return {key: torch.LongTensor(array) for key, array in padded.items()}
 
     def as_padded_tensor_dict(
         self, tokens: IndexedTokenList, padding_lengths: Dict[str, int]

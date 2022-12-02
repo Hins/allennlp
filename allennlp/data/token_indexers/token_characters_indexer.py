@@ -8,7 +8,8 @@ import torch
 from allennlp.common.checks import ConfigurationError
 from allennlp.common.util import pad_sequence_to_length
 from allennlp.data.token_indexers.token_indexer import TokenIndexer, IndexedTokenList
-from allennlp.data.tokenizers import Token, CharacterTokenizer
+from allennlp.data.tokenizers import Token
+from allennlp.data.tokenizers.character_tokenizer import CharacterTokenizer
 from allennlp.data.vocabulary import Vocabulary
 
 
