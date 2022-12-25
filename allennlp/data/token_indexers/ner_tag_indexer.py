@@ -41,11 +41,10 @@ class NerTagIndexer(TokenIndexer[int]):
     @overrides
     def tokens_to_indices(self,
                           tokens: List[Token],
-                          vocabulary: Vocabulary,
-                          index_name: str) -> Dict[str, List[int]]:
+                          vocabulary: Vocabulary) -> Dict[str, List[int]]:
         tags = ['NONE' if not token.ent_type_ else token.ent_type_ for token in tokens]
 
-        return {index_name: [vocabulary.get_token_index(tag, self._namespace) for tag in tags]}
+        return {"ner_tag": [vocabulary.get_token_index(tag, self._namespace) for tag in tags]}
 
     @overrides
     def get_padding_lengths(self, token: int) -> Dict[str, int]:  # pylint: disable=unused-argument

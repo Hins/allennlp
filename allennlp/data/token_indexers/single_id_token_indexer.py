@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Any
 import itertools
 
+import torch
 
 from allennlp.data.vocabulary import Vocabulary
 from allennlp.data.tokenizers import Token
 from allennlp.data.token_indexers.token_indexer import TokenIndexer, IndexedTokenList
+from allennlp.common.util import pad_sequence_to_length
 
 
 _DEFAULT_VALUE = "THIS IS A REALLY UNLIKELY VALUE THAT HAS TO BE A STRING"
@@ -93,6 +95,19 @@ class SingleIdTokenIndexer(TokenIndexer):
     def get_empty_token_list(self) -> IndexedTokenList:
         return {"tokens": []}
 
+    def as_padded_tensor_dict(self,
+                              tokens: IndexedTokenList, padding_lengths: Dict[str, int]
+    ) -> Dict[str, torch.Tensor]:
+        tensor_dict = {}
+        for key, val in tokens.items():
+            if val and isinstance(val[0], bool):
+                tensor_dict[key] = torch.BoolTensor(
+                    pad_sequence_to_length(val, padding_lengths[key], default_value=lambda: False)
+                )
+            elif key in padding_lengths:
+                tensor_dict[key] = torch.LongTensor(pad_sequence_to_length(val, padding_lengths[key]))
+        return tensor_dict
+
     def _get_feature_value(self, token: Token) -> str:
         text = getattr(token, self._feature_name)
         if text is None:
@@ -116,3 +131,5 @@ class SingleIdTokenIndexer(TokenIndexer):
             "default_value": self._default_value,
             "token_min_padding_length": self._token_min_padding_length,
         }
+
+

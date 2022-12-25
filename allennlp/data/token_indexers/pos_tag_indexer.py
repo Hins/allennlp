@@ -53,8 +53,7 @@ class PosTagIndexer(TokenIndexer[int]):
     @overrides
     def tokens_to_indices(self,
                           tokens: List[Token],
-                          vocabulary: Vocabulary,
-                          index_name: str) -> Dict[str, List[int]]:
+                          vocabulary: Vocabulary) -> Dict[str, List[int]]:
         tags: List[str] = []
 
         for token in tokens:
@@ -67,7 +66,7 @@ class PosTagIndexer(TokenIndexer[int]):
 
             tags.append(tag)
 
-        return {index_name: [vocabulary.get_token_index(tag, self._namespace) for tag in tags]}
+        return {"pos_tag": [vocabulary.get_token_index(tag, self._namespace) for tag in tags]}
 
     @overrides
     def get_padding_lengths(self, token: int) -> Dict[str, int]:  # pylint: disable=unused-argument

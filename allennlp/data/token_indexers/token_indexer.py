@@ -56,7 +56,7 @@ class TokenIndexer(Generic[TokenType], Registrable):
         """
         raise NotImplementedError
 
-    def tokens_to_indices(self, tokens: List[Token], vocabulary: Vocabulary, index_name: str) -> IndexedTokenList:
+    def tokens_to_indices(self, tokens: List[Token], vocabulary: Vocabulary) -> IndexedTokenList:
         """
         Takes a list of tokens and converts them to an `IndexedTokenList`.
         This could be just an ID for each token from the vocabulary.
@@ -90,7 +90,8 @@ class TokenIndexer(Generic[TokenType], Registrable):
         will be empty, but for a token characters representation, this will return the number
         of characters in the token.
         """
-        raise NotImplementedError
+        #raise NotImplementedError
+        return {}
 
     '''
     def get_padding_lengths(self, indexed_tokens: IndexedTokenList) -> Dict[str, int]:
